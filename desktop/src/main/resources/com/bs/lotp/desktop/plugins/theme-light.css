@@ -1,0 +1,240 @@
+/* Modern light theme for the LOTRO Plugin Manager. */
+
+.root {
+    -fx-font-family: "Inter", "Segoe UI", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    -fx-font-size: 13px;
+    -fx-background: #eef1f6;
+}
+
+.app-root {
+    -fx-background-color: #eef1f6;
+}
+
+/* --- Header toolbar --- */
+.toolbar {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e2e5ea;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 10 12 10 12;
+    -fx-spacing: 8;
+}
+
+.app-title {
+    -fx-font-size: 17px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #111827;
+    -fx-padding: 0 8 0 2;
+}
+
+.muted {
+    -fx-text-fill: #6b7280;
+    -fx-font-size: 12px;
+}
+
+/* --- Inputs --- */
+.text-field, .combo-box {
+    -fx-background-color: #f8fafc;
+    -fx-border-color: #d7dce3;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 6 10 6 10;
+}
+
+.text-field:focused, .combo-box:focused {
+    -fx-border-color: #2563eb;
+    -fx-background-color: #ffffff;
+}
+
+.search-field {
+    -fx-prompt-text-fill: #9aa3b5;
+}
+
+.combo-box .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #1b1e24;
+}
+
+/* --- Buttons --- */
+.button {
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 7 14 7 14;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-background-color: #e8ecf3;
+    -fx-text-fill: #1b1e24;
+    -fx-border-color: #d7dce3;
+    -fx-border-width: 1;
+}
+
+.button:hover {
+    -fx-background-color: #dde4ef;
+}
+
+.button:disabled {
+    -fx-opacity: 0.5;
+}
+
+.button.primary-button {
+    -fx-background-color: #2563eb;
+    -fx-text-fill: white;
+    -fx-border-color: transparent;
+}
+
+.button.primary-button:hover {
+    -fx-background-color: #1d4ed8;
+}
+
+.button.accent-button {
+    -fx-background-color: #0d9488;
+    -fx-text-fill: white;
+    -fx-border-color: transparent;
+}
+
+.button.accent-button:hover {
+    -fx-background-color: #0f766e;
+}
+
+.button.danger-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #dc2626;
+    -fx-border-color: #f0b4b4;
+}
+
+.button.danger-button:hover {
+    -fx-background-color: #fdecec;
+}
+
+.button.ghost-button {
+    -fx-background-color: transparent;
+    -fx-border-color: #d7dce3;
+}
+
+/* --- Table --- */
+.plugin-table {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e2e5ea;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+}
+
+.plugin-table .column-header-background {
+    -fx-background-color: #f1f4f9;
+    -fx-background-radius: 12 12 0 0;
+}
+
+.plugin-table .column-header {
+    -fx-background-color: transparent;
+    -fx-font-weight: bold;
+    -fx-text-fill: #4b5563;
+    -fx-font-size: 11px;
+}
+
+.plugin-table .table-row-cell {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #eef1f6;
+    -fx-border-width: 0 0 1 0;
+}
+
+.plugin-table .table-row-cell:odd {
+    -fx-background-color: #f8fafc;
+}
+
+.plugin-table .table-row-cell:selected {
+    -fx-background-color: #dbe7ff;
+}
+
+.plugin-table .table-row-cell:selected .table-cell {
+    -fx-text-fill: #111827;
+}
+
+.plugin-table .table-cell {
+    -fx-text-fill: #1b1e24;
+    -fx-padding: 6 8 6 8;
+}
+
+/* --- Status pills (Labels used as cell graphics) --- */
+.pill {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 3 10 3 10;
+    -fx-background-radius: 20;
+    -fx-border-radius: 20;
+}
+
+.pill-none {
+    -fx-background-color: #eef1f6;
+    -fx-text-fill: #6b7280;
+}
+
+.pill-installed {
+    -fx-background-color: #dcf5e3;
+    -fx-text-fill: #15803d;
+}
+
+.pill-update {
+    -fx-background-color: #fdeecd;
+    -fx-text-fill: #b45309;
+}
+
+/* --- Detail card --- */
+.card {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e2e5ea;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 12;
+    -fx-spacing: 8;
+}
+
+.detail-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #111827;
+}
+
+.detail-area {
+    -fx-background-color: transparent;
+}
+
+.detail-area .content {
+    -fx-background-color: transparent;
+}
+
+.detail-area {
+    -fx-text-fill: #374151;
+}
+
+/* --- Split pane + status bar --- */
+.split-pane {
+    -fx-background-color: transparent;
+    -fx-padding: 12;
+}
+
+.split-pane .split-pane-divider {
+    -fx-background-color: transparent;
+    -fx-padding: 6;
+}
+
+.status-bar {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e2e5ea;
+    -fx-border-width: 1 0 0 0;
+    -fx-padding: 8 12 8 12;
+    -fx-spacing: 8;
+}
+
+.progress-bar {
+    -fx-pref-height: 8;
+    -fx-background-radius: 8;
+}
+
+.progress-bar .bar {
+    -fx-background-color: #2563eb;
+    -fx-background-radius: 8;
+}
+
+.progress-bar .track {
+    -fx-background-color: #e8ecf3;
+    -fx-background-radius: 8;
+}

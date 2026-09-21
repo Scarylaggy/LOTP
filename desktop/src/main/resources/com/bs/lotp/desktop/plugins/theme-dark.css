@@ -1,0 +1,282 @@
+/* Modern dark theme for the LOTRO Plugin Manager. Same selectors as theme-light.css. */
+
+.root {
+    -fx-font-family: "Inter", "Segoe UI", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    -fx-font-size: 13px;
+    -fx-background: #121419;
+}
+
+.app-root {
+    -fx-background-color: #121419;
+}
+
+/* --- Header toolbar --- */
+.toolbar {
+    -fx-background-color: #1b1e26;
+    -fx-border-color: #2c3140;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 10 12 10 12;
+    -fx-spacing: 8;
+}
+
+.app-title {
+    -fx-font-size: 17px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #f2f4f9;
+    -fx-padding: 0 8 0 2;
+}
+
+.muted {
+    -fx-text-fill: #9aa3b5;
+    -fx-font-size: 12px;
+}
+
+/* --- Inputs --- */
+.text-field, .combo-box {
+    -fx-background-color: #232734;
+    -fx-border-color: #343a4d;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 6 10 6 10;
+    -fx-text-fill: #e8eaf0;
+    -fx-prompt-text-fill: #6e7891;
+}
+
+.text-field:focused, .combo-box:focused {
+    -fx-border-color: #5b8cff;
+    -fx-background-color: #262b3a;
+}
+
+.search-field {
+    -fx-prompt-text-fill: #6e7891;
+}
+
+.combo-box .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #e8eaf0;
+}
+
+.combo-box-popup .list-view {
+    -fx-background-color: #232734;
+    -fx-border-color: #343a4d;
+}
+
+.combo-box-popup .list-view .list-cell {
+    -fx-background-color: #232734;
+    -fx-text-fill: #e8eaf0;
+}
+
+.combo-box-popup .list-view .list-cell:hover,
+.combo-box-popup .list-view .list-cell:selected {
+    -fx-background-color: #31405f;
+}
+
+/* --- Buttons --- */
+.button {
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+    -fx-padding: 7 14 7 14;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-background-color: #262b3a;
+    -fx-text-fill: #e8eaf0;
+    -fx-border-color: #343a4d;
+    -fx-border-width: 1;
+}
+
+.button:hover {
+    -fx-background-color: #2f3548;
+}
+
+.button:disabled {
+    -fx-opacity: 0.45;
+}
+
+.button.primary-button {
+    -fx-background-color: #3b82f6;
+    -fx-text-fill: white;
+    -fx-border-color: transparent;
+}
+
+.button.primary-button:hover {
+    -fx-background-color: #5b8cff;
+}
+
+.button.accent-button {
+    -fx-background-color: #14b8a6;
+    -fx-text-fill: #062e2b;
+    -fx-border-color: transparent;
+}
+
+.button.accent-button:hover {
+    -fx-background-color: #2dd4bf;
+}
+
+.button.danger-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #f87171;
+    -fx-border-color: #5b2b2b;
+}
+
+.button.danger-button:hover {
+    -fx-background-color: #3a2020;
+}
+
+.button.ghost-button {
+    -fx-background-color: transparent;
+    -fx-border-color: #343a4d;
+}
+
+/* --- Table --- */
+.plugin-table {
+    -fx-background-color: #1b1e26;
+    -fx-border-color: #2c3140;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+}
+
+.plugin-table .column-header-background {
+    -fx-background-color: #232734;
+    -fx-background-radius: 12 12 0 0;
+}
+
+.plugin-table .column-header {
+    -fx-background-color: transparent;
+    -fx-font-weight: bold;
+    -fx-text-fill: #9aa3b5;
+    -fx-font-size: 11px;
+}
+
+.plugin-table .table-row-cell {
+    -fx-background-color: #1b1e26;
+    -fx-border-color: #232734;
+    -fx-border-width: 0 0 1 0;
+}
+
+.plugin-table .table-row-cell:odd {
+    -fx-background-color: #1e2230;
+}
+
+.plugin-table .table-row-cell:selected {
+    -fx-background-color: #2b3c5e;
+}
+
+.plugin-table .table-row-cell:selected .table-cell {
+    -fx-text-fill: #ffffff;
+}
+
+.plugin-table .table-cell {
+    -fx-text-fill: #dfe4ee;
+    -fx-padding: 6 8 6 8;
+}
+
+/* --- Status pills --- */
+.pill {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 3 10 3 10;
+    -fx-background-radius: 20;
+    -fx-border-radius: 20;
+}
+
+.pill-none {
+    -fx-background-color: #2a2f3f;
+    -fx-text-fill: #9aa3b5;
+}
+
+.pill-installed {
+    -fx-background-color: #123d28;
+    -fx-text-fill: #4ade80;
+}
+
+.pill-update {
+    -fx-background-color: #4a2f10;
+    -fx-text-fill: #fbbf24;
+}
+
+/* --- Detail card --- */
+.card {
+    -fx-background-color: #1b1e26;
+    -fx-border-color: #2c3140;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 12;
+    -fx-spacing: 8;
+}
+
+.detail-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #f2f4f9;
+}
+
+.detail-area {
+    -fx-background-color: transparent;
+}
+
+.detail-area .content {
+    -fx-background-color: transparent;
+}
+
+.detail-area {
+    -fx-text-fill: #c3cad9;
+}
+
+/* Popup dialogs follow the theme too */
+.dialog-pane {
+    -fx-background-color: #1b1e26;
+}
+
+.dialog-pane .header-panel {
+    -fx-background-color: #1b1e26;
+}
+
+.dialog-pane .content {
+    -fx-background-color: #1b1e26;
+}
+
+.dialog-pane .label {
+    -fx-text-fill: #dfe4ee;
+}
+
+.dialog-pane .header-panel .label {
+    -fx-text-fill: #f2f4f9;
+}
+
+/* --- Split pane + status bar --- */
+.split-pane {
+    -fx-background-color: transparent;
+    -fx-padding: 12;
+}
+
+.split-pane .split-pane-divider {
+    -fx-background-color: transparent;
+    -fx-padding: 6;
+}
+
+.status-bar {
+    -fx-background-color: #1b1e26;
+    -fx-border-color: #2c3140;
+    -fx-border-width: 1 0 0 0;
+    -fx-padding: 8 12 8 12;
+    -fx-spacing: 8;
+}
+
+.status-bar .label {
+    -fx-text-fill: #9aa3b5;
+}
+
+.progress-bar {
+    -fx-pref-height: 8;
+    -fx-background-radius: 8;
+}
+
+.progress-bar .bar {
+    -fx-background-color: #5b8cff;
+    -fx-background-radius: 8;
+}
+
+.progress-bar .track {
+    -fx-background-color: #2a2f3f;
+    -fx-background-radius: 8;
+}
