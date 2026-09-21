@@ -1,9 +1,11 @@
-package com.bs.lotp.desktop.plugins;
+package com.bs.lotp.desktop.ui;
 
 import java.util.Locale;
 import java.util.Objects;
 
-/** Light/dark UI themes. Each maps to a JavaFX stylesheet bundled next to this class. */
+/**
+ * Light/dark UI themes. Each maps to a JavaFX stylesheet bundled next to this class.
+ */
 public enum UiTheme {
     LIGHT("light", "theme-light.css", "☾ Dark"),
     DARK("dark", "theme-dark.css", "☀ Light");
@@ -22,12 +24,16 @@ public enum UiTheme {
         return id;
     }
 
-    /** Text (with sun/moon glyph) shown on the toggle button while this theme is active. */
+    /**
+     * Text (with sun/moon glyph) shown on the toggle button while this theme is active.
+     */
     public String toggleText() {
         return toggleText;
     }
 
-    /** External-form URL of the stylesheet, for {@code Scene.getStylesheets()}. */
+    /**
+     * External-form URL of the stylesheet, for {@code Scene.getStylesheets()}.
+     */
     public String stylesheet() {
         var url = UiTheme.class.getResource(cssFile);
         Objects.requireNonNull(url, "missing theme css: " + cssFile);

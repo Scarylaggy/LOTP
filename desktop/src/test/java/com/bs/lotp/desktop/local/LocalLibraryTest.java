@@ -1,4 +1,6 @@
-package com.bs.lotp.desktop.plugins;
+package com.bs.lotp.desktop.local;
+
+import com.bs.lotp.desktop.feed.PluginInfo;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;

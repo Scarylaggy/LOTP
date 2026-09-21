@@ -2,10 +2,10 @@ package com.bs.lotp.desktop;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.bs.lotp.desktop.plugins.InstalledStore;
-import com.bs.lotp.desktop.plugins.PluginFeedService;
-import com.bs.lotp.desktop.plugins.PluginInstaller;
-import com.bs.lotp.desktop.plugins.PluginPaths;
+import com.bs.lotp.desktop.feed.PluginFeedService;
+import com.bs.lotp.desktop.local.InstalledStore;
+import com.bs.lotp.desktop.local.PluginInstaller;
+import com.bs.lotp.desktop.settings.PluginPaths;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 

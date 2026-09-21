@@ -1,4 +1,4 @@
-package com.bs.lotp.desktop.plugins;
+package com.bs.lotp.desktop.feed;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;

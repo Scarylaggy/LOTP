@@ -1,4 +1,6 @@
-package com.bs.lotp.desktop.plugins;
+package com.bs.lotp.desktop.local;
+
+import com.bs.lotp.desktop.settings.PluginPaths;
 
 import java.io.IOException;
 import java.nio.file.Files;

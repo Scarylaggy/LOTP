@@ -1,4 +1,4 @@
-package com.bs.lotp.desktop.plugins;
+package com.bs.lotp.desktop.settings;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 

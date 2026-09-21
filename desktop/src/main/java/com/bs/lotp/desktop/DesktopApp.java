@@ -1,10 +1,10 @@
 package com.bs.lotp.desktop;
 
-import com.bs.lotp.desktop.plugins.InstalledStore;
-import com.bs.lotp.desktop.plugins.PluginFeedService;
-import com.bs.lotp.desktop.plugins.PluginInstaller;
-import com.bs.lotp.desktop.plugins.PluginPaths;
-import com.bs.lotp.desktop.plugins.PluginsView;
+import com.bs.lotp.desktop.feed.PluginFeedService;
+import com.bs.lotp.desktop.local.InstalledStore;
+import com.bs.lotp.desktop.local.PluginInstaller;
+import com.bs.lotp.desktop.settings.PluginPaths;
+import com.bs.lotp.desktop.ui.PluginsView;
 import javafx.animation.PauseTransition;
 import javafx.application.Application;
 import javafx.scene.Scene;

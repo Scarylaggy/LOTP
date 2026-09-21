@@ -1,4 +1,4 @@
-package com.bs.lotp.desktop.plugins;
+package com.bs.lotp.desktop.settings;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -35,8 +35,8 @@ public class PluginPaths {
         this(configDir, Path.of(System.getProperty("user.home")));
     }
 
-    /** Package-visible for tests (inject a fake home). */
-    PluginPaths(Path configDir, Path home) {
+    /** Test-friendly constructor (inject config dir and fake home). */
+    public PluginPaths(Path configDir, Path home) {
         this.configDir = configDir;
         this.home = home;
     }
@@ -148,8 +148,8 @@ public class PluginPaths {
         return Files.isDirectory(dir) ? dir : null;
     }
 
-    /** Ordered candidates for {@code <home>/...}. Package-visible for tests. */
-    static List<Path> candidates(Path home) {
+    /** Ordered candidates for {@code <home>/...}. Public for tests. */
+    public static List<Path> candidates(Path home) {
         String user = home.getFileName() == null ? "" : home.getFileName().toString();
         List<Path> result = new ArrayList<>();
         // Native client docs folder (Windows layout, also valid for native installs).

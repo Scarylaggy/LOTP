@@ -1,4 +1,4 @@
-package com.bs.lotp.desktop;
+package com.bs.lotp.desktop.config;
 
 import java.net.http.HttpClient;
 import java.time.Duration;
