@@ -14,12 +14,18 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 
-/** Spring Boot + JavaFX: Boot owns the services, JavaFX owns the UI thread. */
+/**
+ * Spring Boot + JavaFX: Boot owns the services, JavaFX owns the UI thread.
+ */
 @SpringBootApplication
 public class DesktopApp extends Application {
 
     private ConfigurableApplicationContext context;
     private Stage stage;
+
+    public static void main(String[] args) {
+        launch(args);
+    }
 
     @Override
     public void init() {
@@ -55,7 +61,9 @@ public class DesktopApp extends Application {
         context.close();
     }
 
-    /** Saves one second after the last move/resize, so abnormal exits keep the size too. */
+    /**
+     * Saves one second after the last move/resize, so abnormal exits keep the size too.
+     */
     private void trackBounds(Stage stage) {
         PauseTransition saver = new PauseTransition(Duration.seconds(1));
         saver.setOnFinished(e -> saveBounds());
@@ -90,9 +98,5 @@ public class DesktopApp extends Application {
             System.err.println("lotp: could not restore window bounds: " + e.getMessage());
         }
         return null;
-    }
-
-    public static void main(String[] args) {
-        launch(args);
     }
 }

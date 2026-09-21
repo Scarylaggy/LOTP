@@ -20,6 +20,13 @@ public enum UiTheme {
         this.toggleText = toggleText;
     }
 
+    public static UiTheme from(String id) {
+        if (id != null && id.toLowerCase(Locale.ROOT).startsWith("dark")) {
+            return DARK;
+        }
+        return LIGHT;
+    }
+
     public String id() {
         return id;
     }
@@ -38,12 +45,5 @@ public enum UiTheme {
         var url = UiTheme.class.getResource(cssFile);
         Objects.requireNonNull(url, "missing theme css: " + cssFile);
         return url.toExternalForm();
-    }
-
-    public static UiTheme from(String id) {
-        if (id != null && id.toLowerCase(Locale.ROOT).startsWith("dark")) {
-            return DARK;
-        }
-        return LIGHT;
     }
 }

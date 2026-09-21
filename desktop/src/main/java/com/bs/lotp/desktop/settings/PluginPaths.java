@@ -1,14 +1,15 @@
 package com.bs.lotp.desktop.settings;
 
+import org.springframework.stereotype.Service;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.dataformat.yaml.YAMLMapper;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import org.springframework.stereotype.Service;
-import tools.jackson.databind.ObjectMapper;
-import tools.jackson.dataformat.yaml.YAMLMapper;
 
 /**
  * Locates the LOTRO {@code Plugins} folder: explicit override from settings,
@@ -20,11 +21,14 @@ public class PluginPaths {
     private static final String SETTINGS_FILE = "settings.yaml";
     private static final String LEGACY_SETTINGS_FILE = "settings.properties";
 
-    /** Steam AppID of LOTRO (for Proton prefix lookup on Linux). */
+    /**
+     * Steam AppID of LOTRO (for Proton prefix lookup on Linux).
+     */
     private static final String LOTRO_STEAM_APP_ID = "212500";
 
     private final Path configDir;
     private final Path home;
+    private final ObjectMapper yaml = new YAMLMapper();
 
     public PluginPaths() {
         this(Path.of(System.getProperty("user.home"), ".lotp-desktop"),
@@ -35,13 +39,36 @@ public class PluginPaths {
         this(configDir, Path.of(System.getProperty("user.home")));
     }
 
-    /** Test-friendly constructor (inject config dir and fake home). */
+    /**
+     * Test-friendly constructor (inject config dir and fake home).
+     */
     public PluginPaths(Path configDir, Path home) {
         this.configDir = configDir;
         this.home = home;
     }
 
-    /** Returns the configured folder, or auto-detects and remembers the first hit. */
+    /**
+     * Ordered candidates for {@code <home>/...}. Public for tests.
+     */
+    public static List<Path> candidates(Path home) {
+        String user = home.getFileName() == null ? "" : home.getFileName().toString();
+        List<Path> result = new ArrayList<>();
+        // Native client docs folder (Windows layout, also valid for native installs).
+        result.add(home.resolve("Documents/The Lord of the Rings Online/Plugins"));
+        // Steam / Proton.
+        result.add(home.resolve(".steam/steam/steamapps/compatdata/" + LOTRO_STEAM_APP_ID
+                + "/pfx/drive_c/users/steamuser/Documents/The Lord of the Rings Online/Plugins"));
+        result.add(home.resolve(".local/share/Steam/steamapps/compatdata/" + LOTRO_STEAM_APP_ID
+                + "/pfx/drive_c/users/steamuser/Documents/The Lord of the Rings Online/Plugins"));
+        // Plain Wine prefixes.
+        result.add(home.resolve(".wine/drive_c/users/" + user + "/Documents/The Lord of the Rings Online/Plugins"));
+        result.add(home.resolve(".wine/drive_c/users/" + user + "/My Documents/The Lord of the Rings Online/Plugins"));
+        return result;
+    }
+
+    /**
+     * Returns the configured folder, or auto-detects and remembers the first hit.
+     */
     public Path pluginsDir() throws IOException {
         Path configured = readConfigured();
         if (configured != null) {
@@ -62,7 +89,9 @@ public class PluginPaths {
         saveSettings(settings.withPluginsDir(dir.toString()));
     }
 
-    /** Saved UI theme id ("light"/"dark"), or null if never chosen. */
+    /**
+     * Saved UI theme id ("light"/"dark"), or null if never chosen.
+     */
     public String theme() throws IOException {
         return loadSettings().theme();
     }
@@ -76,7 +105,9 @@ public class PluginPaths {
         return configDir;
     }
 
-    /** Last window bounds as {x, y, width, height}, or null if never saved or invalid. */
+    /**
+     * Last window bounds as {x, y, width, height}, or null if never saved or invalid.
+     */
     public double[] windowBounds() throws IOException {
         AppSettings.WindowBounds window = loadSettings().window();
         if (window == null || window.w() < 400 || window.h() < 300) {
@@ -89,8 +120,6 @@ public class PluginPaths {
         AppSettings settings = loadSettings();
         saveSettings(settings.withWindow(x, y, w, h));
     }
-
-    private final ObjectMapper yaml = new YAMLMapper();
 
     private AppSettings loadSettings() throws IOException {
         Path file = configDir.resolve(SETTINGS_FILE);
@@ -110,7 +139,9 @@ public class PluginPaths {
         yaml.writerWithDefaultPrettyPrinter().writeValue(configDir.resolve(SETTINGS_FILE).toFile(), settings);
     }
 
-    /** One-time import from the old properties file; removes it afterwards. */
+    /**
+     * One-time import from the old properties file; removes it afterwards.
+     */
     private AppSettings migrateLegacy() throws IOException {
         Path legacy = configDir.resolve(LEGACY_SETTINGS_FILE);
         if (!Files.isRegularFile(legacy)) {
@@ -146,22 +177,5 @@ public class PluginPaths {
         }
         Path dir = Path.of(value.trim());
         return Files.isDirectory(dir) ? dir : null;
-    }
-
-    /** Ordered candidates for {@code <home>/...}. Public for tests. */
-    public static List<Path> candidates(Path home) {
-        String user = home.getFileName() == null ? "" : home.getFileName().toString();
-        List<Path> result = new ArrayList<>();
-        // Native client docs folder (Windows layout, also valid for native installs).
-        result.add(home.resolve("Documents/The Lord of the Rings Online/Plugins"));
-        // Steam / Proton.
-        result.add(home.resolve(".steam/steam/steamapps/compatdata/" + LOTRO_STEAM_APP_ID
-                + "/pfx/drive_c/users/steamuser/Documents/The Lord of the Rings Online/Plugins"));
-        result.add(home.resolve(".local/share/Steam/steamapps/compatdata/" + LOTRO_STEAM_APP_ID
-                + "/pfx/drive_c/users/steamuser/Documents/The Lord of the Rings Online/Plugins"));
-        // Plain Wine prefixes.
-        result.add(home.resolve(".wine/drive_c/users/" + user + "/Documents/The Lord of the Rings Online/Plugins"));
-        result.add(home.resolve(".wine/drive_c/users/" + user + "/My Documents/The Lord of the Rings Online/Plugins"));
-        return result;
     }
 }

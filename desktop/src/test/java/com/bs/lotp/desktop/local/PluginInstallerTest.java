@@ -1,9 +1,8 @@
 package com.bs.lotp.desktop.local;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+import org.springframework.web.client.RestClient;
 
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -11,9 +10,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-import org.springframework.web.client.RestClient;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 class PluginInstallerTest {
 
@@ -28,7 +26,7 @@ class PluginInstallerTest {
     private static Path makeZip(Path dir, String... entries) throws Exception {
         Path zip = dir.resolve("plugin.zip");
         try (OutputStream out = Files.newOutputStream(zip);
-                ZipOutputStream zipOut = new ZipOutputStream(out)) {
+             ZipOutputStream zipOut = new ZipOutputStream(out)) {
             for (String entry : entries) {
                 if (entry.endsWith("/")) {
                     zipOut.putNextEntry(new ZipEntry(entry));

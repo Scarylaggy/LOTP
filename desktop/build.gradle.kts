@@ -1,6 +1,5 @@
-import org.gradle.jvm.toolchain.JavaToolchainService
-import java.net.URI
 import org.springframework.boot.gradle.tasks.bundling.BootJar
+import java.net.URI
 
 plugins {
     java
@@ -119,7 +118,11 @@ fun registerJpackageTask(taskName: String, packageType: String, taskDescription:
 }
 
 // Portable folder: build/jpackage/lotp-desktop/bin/lotp-desktop — zip this for ad-hoc sharing.
-registerJpackageTask("jpackageImage", "app-image", "Builds a self-contained app image (no installer, works everywhere).")
+registerJpackageTask(
+    "jpackageImage",
+    "app-image",
+    "Builds a self-contained app image (no installer, works everywhere)."
+)
 // Native installer for this machine's OS. Linux 'deb' needs dpkg-deb installed.
 registerJpackageTask("jpackageInstaller", "deb", "Builds a Linux .deb installer (requires dpkg-deb).")
 

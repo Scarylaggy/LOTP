@@ -2,6 +2,9 @@ package com.bs.lotp.desktop.local;
 
 import com.bs.lotp.desktop.feed.PluginInfo;
 
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -10,9 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamReader;
 
 /**
  * Reads the plugins actually present in the LOTRO Plugins folder by parsing
@@ -22,19 +22,12 @@ import javax.xml.stream.XMLStreamReader;
  */
 public final class LocalLibrary {
 
-    /** One {@code .plugin} descriptor found on disk. */
-    public record LocalPlugin(
-            String name,
-            String author,
-            String version,
-            /** Top-level entry (dir or file) relative to the Plugins folder. */
-            String topLevelDir) {
-    }
-
     private LocalLibrary() {
     }
 
-    /** Walks {@code pluginsDir} for {@code *.plugin} files. Never throws for a missing dir. */
+    /**
+     * Walks {@code pluginsDir} for {@code *.plugin} files. Never throws for a missing dir.
+     */
     public static List<LocalPlugin> scan(Path pluginsDir) {
         List<LocalPlugin> result = new ArrayList<>();
         if (pluginsDir == null || !Files.isDirectory(pluginsDir)) {
@@ -52,7 +45,9 @@ public final class LocalLibrary {
         return result;
     }
 
-    /** Best local match for a feed entry, preferring an author match on ties. */
+    /**
+     * Best local match for a feed entry, preferring an author match on ties.
+     */
     public static Optional<LocalPlugin> matchFor(PluginInfo plugin, List<LocalPlugin> local) {
         String wanted = normalized(plugin.name());
         if (wanted.isEmpty()) {
@@ -75,7 +70,9 @@ public final class LocalLibrary {
                 .or(() -> Optional.of(hits.get(0)));
     }
 
-    /** Normalizes names for comparison: lowercase, alphanumeric only ("Deed Tracker" = "DeedTracker"). */
+    /**
+     * Normalizes names for comparison: lowercase, alphanumeric only ("Deed Tracker" = "DeedTracker").
+     */
     static String normalized(String value) {
         if (value == null) {
             return "";
@@ -83,7 +80,9 @@ public final class LocalLibrary {
         return value.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
     }
 
-    /** Normalizes versions ("v1.45" = "1.45"). */
+    /**
+     * Normalizes versions ("v1.45" = "1.45").
+     */
     public static String normalizedVersion(String value) {
         String n = normalized(value);
         return n.startsWith("v") ? n.substring(1) : n;
@@ -131,5 +130,16 @@ public final class LocalLibrary {
                 ? relative.getFileName().toString()
                 : relative.getName(0).toString();
         return Optional.of(new LocalPlugin(name.trim(), author.trim(), version.trim(), top));
+    }
+
+    /**
+     * One {@code .plugin} descriptor found on disk.
+     */
+    public record LocalPlugin(
+            String name,
+            String author,
+            String version,
+            /** Top-level entry (dir or file) relative to the Plugins folder. */
+            String topLevelDir) {
     }
 }

@@ -2,7 +2,9 @@ package com.bs.lotp.desktop.feed;
 
 import java.time.Instant;
 
-/** One entry from the lotrointerface plugin compendium feed. */
+/**
+ * One entry from the lotrointerface plugin compendium feed.
+ */
 public record PluginInfo(
         long uid,
         String name,

@@ -1,20 +1,23 @@
 package com.bs.lotp.desktop.feed;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
+
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamReader;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientException;
 
-/** Downloads and parses the lotrointerface plugin compendium XML feed. Call off the FX thread. */
+/**
+ * Downloads and parses the lotrointerface plugin compendium XML feed. Call off the FX thread.
+ */
 @Service
 public class PluginFeedService {
 
@@ -33,24 +36,9 @@ public class PluginFeedService {
         this.feedUrl = feedUrl;
     }
 
-    public List<PluginInfo> fetch() throws IOException {
-        byte[] body;
-        try {
-            body = client.get().uri(feedUrl).retrieve().body(byte[].class);
-        } catch (RestClientException e) {
-            throw new IOException("Feed download failed: " + e.getMessage(), e);
-        }
-        if (body == null || body.length == 0) {
-            throw new IOException("Feed returned an empty body");
-        }
-        try {
-            return parse(body);
-        } catch (Exception e) {
-            throw new IOException("Failed to parse plugin feed: " + e.getMessage(), e);
-        }
-    }
-
-    /** Package-visible for tests. */
+    /**
+     * Package-visible for tests.
+     */
     static List<PluginInfo> parse(byte[] xml) throws Exception {
         List<PluginInfo> result = new ArrayList<>();
         XMLInputFactory factory = XMLInputFactory.newFactory();
@@ -82,8 +70,7 @@ public class PluginFeedService {
                     }
                     text.setLength(0);
                 }
-                case XMLStreamConstants.CHARACTERS, XMLStreamConstants.CDATA ->
-                        text.append(reader.getText());
+                case XMLStreamConstants.CHARACTERS, XMLStreamConstants.CDATA -> text.append(reader.getText());
                 case XMLStreamConstants.END_ELEMENT -> {
                     String end = reader.getLocalName();
                     if ("Ui".equals(end) && inUi) {
@@ -133,6 +120,23 @@ public class PluginFeedService {
             return Long.parseLong(value.trim());
         } catch (NumberFormatException e) {
             return 0;
+        }
+    }
+
+    public List<PluginInfo> fetch() throws IOException {
+        byte[] body;
+        try {
+            body = client.get().uri(feedUrl).retrieve().body(byte[].class);
+        } catch (RestClientException e) {
+            throw new IOException("Feed download failed: " + e.getMessage(), e);
+        }
+        if (body == null || body.length == 0) {
+            throw new IOException("Feed returned an empty body");
+        }
+        try {
+            return parse(body);
+        } catch (Exception e) {
+            throw new IOException("Failed to parse plugin feed: " + e.getMessage(), e);
         }
     }
 }

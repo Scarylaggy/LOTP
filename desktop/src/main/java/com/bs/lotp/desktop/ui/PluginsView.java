@@ -6,88 +6,46 @@ import com.bs.lotp.desktop.local.InstalledStore;
 import com.bs.lotp.desktop.local.LocalLibrary;
 import com.bs.lotp.desktop.local.PluginInstaller;
 import com.bs.lotp.desktop.settings.PluginPaths;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.TreeSet;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.function.Consumer;
+import com.bs.lotp.desktop.ui.plugintable.PluginRow;
+import com.bs.lotp.desktop.ui.plugintable.PluginTableModel;
+import com.bs.lotp.desktop.ui.plugintable.PluginTablePresenter;
 import javafx.application.Platform;
-import javafx.beans.binding.Bindings;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.ProgressBar;
-import javafx.scene.control.SelectionMode;
-import javafx.scene.control.SplitPane;
-import javafx.scene.control.TableCell;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 
-/** Browse/search the lotrointerface feed, install/update/uninstall into the LOTRO Plugins folder. */
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.function.Consumer;
+
+/**
+ * Browse/search the lotrointerface feed, install/update/uninstall into the LOTRO Plugins folder.
+ */
 public class PluginsView {
-
-    enum Status {
-        NOT_INSTALLED("Not installed"),
-        INSTALLED("Installed"),
-        UPDATE_AVAILABLE("Update available");
-
-        final String text;
-
-        Status(String text) {
-            this.text = text;
-        }
-    }
-
-    record Row(PluginInfo plugin, InstalledStore.InstalledEntry installed, Status status) {
-    }
-
-    @FunctionalInterface
-    interface Job<T> {
-        T run() throws Exception;
-    }
 
     private final Stage owner;
     private final PluginFeedService feed;
     private final PluginInstaller installer;
     private final InstalledStore store;
     private final PluginPaths paths;
-
-    private final ObservableList<Row> rows = FXCollections.observableArrayList();
     private final StringProperty statusText = new SimpleStringProperty("Press Refresh to load the plugin list.");
     private final DoubleProperty progress = new SimpleDoubleProperty(0);
     private final StringProperty folderText = new SimpleStringProperty("");
-
     private Path pluginsDir;
-    private TableView<Row> table;
+    private PluginTablePresenter pluginTable;
     private TextArea detail;
     private Label detailTitle;
     private Button installBtn;
@@ -96,7 +54,6 @@ public class PluginsView {
     private Button themeBtn;
     private ComboBox<String> categoryBox;
     private UiTheme theme;
-
     public PluginsView(
             Stage owner,
             PluginFeedService feed,
@@ -115,7 +72,9 @@ public class PluginsView {
         return theme;
     }
 
-    /** Switches the active theme, updates the live scene, and persists the choice. */
+    /**
+     * Switches the active theme, updates the live scene, and persists the choice.
+     */
     public void applyTheme(UiTheme next) {
         if (next == null) {
             return;
@@ -146,86 +105,10 @@ public class PluginsView {
     }
 
     public BorderPane build() {
-        table = new TableView<>();
-        table.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
-        table.getStyleClass().add("plugin-table");
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
-        FilteredList<Row> filtered = new FilteredList<>(rows, r -> true);
-        table.setItems(filtered);
-
-        TableColumn<Row, String> nameCol = new TableColumn<>("Name");
-        nameCol.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().plugin().name()));
-        nameCol.setPrefWidth(220);
-
-        TableColumn<Row, String> authorCol = new TableColumn<>("Author");
-        authorCol.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().plugin().author()));
-        authorCol.setPrefWidth(130);
-
-        TableColumn<Row, String> versionCol = new TableColumn<>("Version");
-        versionCol.setCellValueFactory(c -> new SimpleStringProperty(
-                c.getValue().plugin().version()
-                        + (c.getValue().installed() == null ? "" : " / " + c.getValue().installed().version())));
-        versionCol.setPrefWidth(130);
-
-        TableColumn<Row, String> updatedCol = new TableColumn<>("Updated");
-        updatedCol.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().plugin().updatedText()));
-        updatedCol.setPrefWidth(100);
-
-        TableColumn<Row, String> categoryCol = new TableColumn<>("Category");
-        categoryCol.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().plugin().category()));
-        categoryCol.setPrefWidth(170);
-
-        TableColumn<Row, Number> downloadsCol = new TableColumn<>("Downloads");
-        downloadsCol.setCellValueFactory(c -> Bindings.createIntegerBinding(
-                () -> (int) Math.min(c.getValue().plugin().downloads(), Integer.MAX_VALUE)));
-        downloadsCol.setPrefWidth(100);
-
-        TableColumn<Row, String> sizeCol = new TableColumn<>("Size");
-        sizeCol.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().plugin().sizeText()));
-        sizeCol.setPrefWidth(90);
-
-        TableColumn<Row, String> statusCol = new TableColumn<>("Status");
-        statusCol.setCellValueFactory(c -> new SimpleStringProperty(c.getValue().status().text));
-        statusCol.setPrefWidth(140);
-        statusCol.setCellFactory(col -> new TableCell<Row, String>() {
-            private final Label pill = new Label();
-
-            {
-                pill.getStyleClass().add("pill");
-                setAlignment(Pos.CENTER_LEFT);
-            }
-
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
-                    setGraphic(null);
-                    setText(null);
-                    return;
-                }
-                Row row = (Row) getTableRow().getItem();
-                pill.setText(row.status().text);
-                pill.getStyleClass().removeAll("pill-none", "pill-installed", "pill-update");
-                switch (row.status()) {
-                    case INSTALLED -> pill.getStyleClass().add("pill-installed");
-                    case UPDATE_AVAILABLE -> pill.getStyleClass().add("pill-update");
-                    default -> pill.getStyleClass().add("pill-none");
-                }
-                setGraphic(pill);
-                setText(null);
-            }
-        });
-
-        table.getColumns().add(nameCol);
-        table.getColumns().add(authorCol);
-        table.getColumns().add(versionCol);
-        table.getColumns().add(updatedCol);
-        table.getColumns().add(categoryCol);
-        table.getColumns().add(downloadsCol);
-        table.getColumns().add(sizeCol);
-        table.getColumns().add(statusCol);
-
-        table.getSelectionModel().selectedItemProperty().addListener((obs, old, row) -> {
+        // MVP: the presenter owns table state (model) and construction (view).
+        // Must run on the FX thread since it builds controls.
+        pluginTable = new PluginTablePresenter();
+        pluginTable.onSelectionChanged(row -> {
             if (row == null) {
                 detailTitle.setText("Select a plugin");
                 detail.setText("");
@@ -249,13 +132,13 @@ public class PluginsView {
         searchField.setPromptText("🔍 Search name, author, description...");
         searchField.setPrefWidth(260);
         searchField.getStyleClass().add("search-field");
-        searchField.textProperty().addListener((obs, o, n) -> applyFilter(filtered, searchField, categoryBox));
+        searchField.textProperty().addListener((obs, o, n) -> pluginTable.setSearchQuery(n));
 
         categoryBox = new ComboBox<>();
-        categoryBox.getItems().add("All categories");
+        categoryBox.getItems().add(PluginTableModel.ALL_CATEGORIES);
         categoryBox.getSelectionModel().selectFirst();
         categoryBox.setPrefWidth(200);
-        categoryBox.valueProperty().addListener((obs, o, n) -> applyFilter(filtered, searchField, categoryBox));
+        categoryBox.valueProperty().addListener((obs, o, n) -> pluginTable.setCategoryFilter(n));
 
         themeBtn = new Button(theme.toggleText());
         themeBtn.getStyleClass().add("ghost-button");
@@ -320,7 +203,7 @@ public class PluginsView {
         VBox card = new VBox(8, detailTitle, detail, actions);
         card.getStyleClass().add("card");
 
-        SplitPane split = new SplitPane(table, card);
+        SplitPane split = new SplitPane(pluginTable.node(), card);
         split.setOrientation(javafx.geometry.Orientation.VERTICAL);
         split.setDividerPositions(0.62);
 
@@ -346,25 +229,25 @@ public class PluginsView {
         return root;
     }
 
-    /** First load; safe to call once when the tab is first shown. */
+    /**
+     * First load; safe to call once when the tab is first shown.
+     */
     public void refreshIfEmpty() {
-        if (rows.isEmpty()) {
+        if (pluginTable != null && pluginTable.isEmpty()) {
             refresh();
         }
     }
-
-    // --- Actions (all network/disk work off the FX thread) ---
 
     private void refresh() {
         setBusy(true, "Downloading plugin list...");
         runAsync(feed::fetch, plugins -> {
             try {
                 Map<Long, InstalledStore.InstalledEntry> installed = reconcile(plugins);
-                List<Row> fresh = plugins.stream()
+                List<PluginRow> fresh = plugins.stream()
                         .sorted(Comparator.comparing(PluginInfo::name, String.CASE_INSENSITIVE_ORDER))
-                        .map(p -> new Row(p, installed.get(p.uid()), statusOf(p, installed.get(p.uid()))))
+                        .map(p -> PluginRow.of(p, installed.get(p.uid())))
                         .toList();
-                rows.setAll(fresh);
+                pluginTable.setRows(fresh);
                 TreeSet<String> categories = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
                 plugins.forEach(p -> {
                     if (!p.category().isBlank()) {
@@ -372,7 +255,7 @@ public class PluginsView {
                     }
                 });
                 String selectedCategory = categoryBox.getValue();
-                categoryBox.getItems().setAll("All categories");
+                categoryBox.getItems().setAll(PluginTableModel.ALL_CATEGORIES);
                 categoryBox.getItems().addAll(categories);
                 if (selectedCategory != null && categoryBox.getItems().contains(selectedCategory)) {
                     categoryBox.setValue(selectedCategory);
@@ -388,7 +271,9 @@ public class PluginsView {
         }, "Refreshing plugin list");
     }
 
-    private void install(Row row) {
+    // --- Actions (all network/disk work off the FX thread) ---
+
+    private void install(PluginRow row) {
         if (!ensureFolder()) {
             return;
         }
@@ -405,14 +290,14 @@ public class PluginsView {
                 Files.deleteIfExists(zip);
             }
         }, entry -> {
-            replaceRow(new Row(row.plugin(), entry, Status.INSTALLED));
+            pluginTable.replaceRow(new PluginRow(row.plugin(), entry, Status.INSTALLED));
             setBusy(false, null);
             statusText.set("Installed " + row.plugin().name() + " " + row.plugin().version());
             updateButtonStates();
         }, "Installing " + row.plugin().name());
     }
 
-    private void update(Row row) {
+    private void update(PluginRow row) {
         if (!ensureFolder() || row.installed() == null) {
             return;
         }
@@ -430,14 +315,14 @@ public class PluginsView {
                 Files.deleteIfExists(zip);
             }
         }, entry -> {
-            replaceRow(new Row(row.plugin(), entry, Status.INSTALLED));
+            pluginTable.replaceRow(new PluginRow(row.plugin(), entry, Status.INSTALLED));
             setBusy(false, null);
             statusText.set("Updated " + row.plugin().name() + " to " + row.plugin().version());
             updateButtonStates();
         }, "Updating " + row.plugin().name());
     }
 
-    private void uninstall(Row row) {
+    private void uninstall(PluginRow row) {
         if (row.installed() == null) {
             return;
         }
@@ -449,14 +334,12 @@ public class PluginsView {
             store.remove(row.plugin().uid());
             return row.plugin();
         }, plugin -> {
-            replaceRow(new Row(plugin, null, Status.NOT_INSTALLED));
+            pluginTable.replaceRow(new PluginRow(plugin, null, Status.NOT_INSTALLED));
             setBusy(false, null);
             statusText.set("Uninstalled " + plugin.name());
             updateButtonStates();
         }, "Uninstalling " + row.plugin().name());
     }
-
-    // --- Helpers ---
 
     /**
      * Trusts the disk: drops store entries whose folders are gone, adopts
@@ -507,35 +390,14 @@ public class PluginsView {
         return installed;
     }
 
-    private static Status statusOf(PluginInfo plugin, InstalledStore.InstalledEntry installed) {
-        if (installed == null) {
-            return Status.NOT_INSTALLED;
-        }
-        long feedUpdated = plugin.updated() == null ? 0 : plugin.updated().getEpochSecond();
-        if (feedUpdated > installed.feedUpdated()
-                || !LocalLibrary.normalizedVersion(installed.version())
-                        .equals(LocalLibrary.normalizedVersion(plugin.version()))) {
-            return Status.UPDATE_AVAILABLE;
-        }
-        return Status.INSTALLED;
-    }
+    // --- Helpers ---
 
-    private void replaceRow(Row replacement) {
-        for (int i = 0; i < rows.size(); i++) {
-            if (rows.get(i).plugin().uid() == replacement.plugin().uid()) {
-                rows.set(i, replacement);
-                table.getSelectionModel().select(i);
-                return;
-            }
-        }
-    }
-
-    private Optional<Row> selected() {
-        return Optional.ofNullable(table.getSelectionModel().getSelectedItem());
+    private Optional<PluginRow> selected() {
+        return Optional.ofNullable(pluginTable == null ? null : pluginTable.selected());
     }
 
     private void updateButtonStates() {
-        Row row = table == null ? null : table.getSelectionModel().getSelectedItem();
+        PluginRow row = pluginTable == null ? null : pluginTable.selected();
         boolean hasFolder = pluginsDir != null;
         installBtn.setDisable(row == null || row.status() != Status.NOT_INSTALLED || !hasFolder);
         updateBtn.setDisable(row == null || row.status() != Status.UPDATE_AVAILABLE || !hasFolder);
@@ -576,25 +438,6 @@ public class PluginsView {
         }
     }
 
-    private void applyFilter(FilteredList<Row> filtered, TextField search, ComboBox<String> category) {
-        String q = search.getText() == null ? "" : search.getText().toLowerCase();
-        String cat = category.getValue();
-        filtered.setPredicate(row -> {
-            boolean matchCategory = cat == null || cat.equals("All categories")
-                    || row.plugin().category().equals(cat);
-            if (!matchCategory) {
-                return false;
-            }
-            if (q.isBlank()) {
-                return true;
-            }
-            PluginInfo p = row.plugin();
-            return p.name().toLowerCase().contains(q)
-                    || p.author().toLowerCase().contains(q)
-                    || p.description().toLowerCase().contains(q);
-        });
-    }
-
     private void styleDialog(Alert alert) {
         Scene scene = owner == null ? null : owner.getScene();
         if (alert.getDialogPane() != null && scene != null && !scene.getStylesheets().isEmpty()) {
@@ -618,6 +461,7 @@ public class PluginsView {
             System.err.println("lotp: " + action + " failed: " + cause);
             setBusy(false, null);
             statusText.set(action + " failed: " + cause.getMessage());
+
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle("lotp Desktop");
             alert.setHeaderText(action + " failed");
@@ -637,5 +481,10 @@ public class PluginsView {
         } else {
             Platform.runLater(() -> setBusy(busy, message));
         }
+    }
+
+    @FunctionalInterface
+    interface Job<T> {
+        T run() throws Exception;
     }
 }
