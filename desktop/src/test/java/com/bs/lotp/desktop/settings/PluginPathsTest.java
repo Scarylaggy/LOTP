@@ -6,6 +6,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -60,8 +61,17 @@ class PluginPathsTest {
         Files.createDirectories(config);
         Path plugins = temp.resolve("Plugins");
         Files.createDirectories(plugins);
-        Files.writeString(config.resolve("settings.properties"),
-                "plugins.dir=" + plugins + "\nwindow.x=10\nwindow.y=20\nwindow.w=1280\nwindow.h=800\n");
+        // Write via Properties.store so backslashes are escaped the way a real
+        // legacy file would be (raw "C:\..." would be misparsed on Windows).
+        Properties legacy = new Properties();
+        legacy.setProperty("plugins.dir", plugins.toString());
+        legacy.setProperty("window.x", "10");
+        legacy.setProperty("window.y", "20");
+        legacy.setProperty("window.w", "1280");
+        legacy.setProperty("window.h", "800");
+        try (var out = Files.newOutputStream(config.resolve("settings.properties"))) {
+            legacy.store(out, null);
+        }
 
         PluginPaths paths = new PluginPaths(config, temp.resolve("home"));
         assertEquals(plugins, paths.pluginsDir());
