@@ -1,0 +1,42 @@
+name: CI
+
+# Validates every push/PR on all target OSes: compile, unit tests,
+# and a self-contained jpackage app-image (which pulls the right
+# JavaFX platform jars per runner OS).
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build + test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        # One runner per shippable OS. jpackage installers are NOT
+        # cross-compilable, so each OS must build on itself.
+        os: [ubuntu-22.04, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build, test, package app-image
+        shell: bash
+        run: ./gradlew :desktop:build :desktop:jpackageImage --stacktrace
+
+      - name: Upload app-image (ad-hoc download)
+        uses: actions/upload-artifact@v4
+        with:
+          name: lotp-app-image-${{ matrix.os }}
+          path: desktop/build/jpackage/lotp-desktop/
+          retention-days: 7

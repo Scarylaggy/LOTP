@@ -97,11 +97,15 @@ fun registerJpackageTask(taskName: String, packageType: String, taskDescription:
             require(modulePath.isNotEmpty()) { "No JavaFX platform jars found on runtimeClasspath" }
 
             executable = jpackageBin.absolutePath
+            // Release builds pass -PappVersion=1.2.3 (tag); dev builds fall back to
+            // project.version without the -SNAPSHOT suffix (jpackage requires X.Y[.Z]).
+            val rawVersion = (findProperty("appVersion") as String?) ?: version.toString()
+            val appVersion = rawVersion.removePrefix("v").removeSuffix("-SNAPSHOT")
             val jpackageArgs = mutableListOf(
                 "--type", packageType,
                 "--dest", layout.buildDirectory.dir("jpackage").get().asFile.absolutePath,
                 "--name", "lotp-desktop",
-                "--app-version", version.toString().removeSuffix("-SNAPSHOT"),
+                "--app-version", appVersion,
                 "--vendor", "lotp",
                 "--input", libDir.absolutePath,
                 "--main-jar", mainJar,
@@ -110,7 +114,13 @@ fun registerJpackageTask(taskName: String, packageType: String, taskDescription:
                 "--add-modules", "$javafxAddModules,$jdkAddModules",
                 "--java-options", "--enable-native-access=javafx.graphics"
             )
-            val iconFile = projectDir.resolve("src/main/resources/icon.png")
+            // jpackage wants a per-OS icon format; use it only when present.
+            val iconExt = when {
+                org.gradle.internal.os.OperatingSystem.current().isWindows -> "ico"
+                org.gradle.internal.os.OperatingSystem.current().isMacOsX -> "icns"
+                else -> "png"
+            }
+            val iconFile = projectDir.resolve("src/main/resources/icon.$iconExt")
             if (iconFile.isFile) jpackageArgs.addAll(listOf("--icon", iconFile.absolutePath))
             args = jpackageArgs
         }
@@ -123,13 +133,30 @@ registerJpackageTask(
     "app-image",
     "Builds a self-contained app image (no installer, works everywhere)."
 )
-// Native installer for this machine's OS. Linux 'deb' needs dpkg-deb installed.
-registerJpackageTask("jpackageInstaller", "deb", "Builds a Linux .deb installer (requires dpkg-deb).")
+// Native installer for the current OS. jpackage installers are platform-specific:
+// run the build on the OS you want to ship for (CI does this via a build matrix).
+// Linux 'deb' needs dpkg-deb, Windows 'msi' needs WiX Toolset, macOS 'dmg' needs nothing extra.
+val installerType = when {
+    org.gradle.internal.os.OperatingSystem.current().isWindows -> "msi"
+    org.gradle.internal.os.OperatingSystem.current().isMacOsX -> "dmg"
+    else -> "deb"
+}
+registerJpackageTask(
+    "jpackageInstaller",
+    installerType,
+    "Builds a native installer for the current OS (deb on Linux, msi on Windows, dmg on macOS)."
+)
 
 // --- AppImage (Linux single-file bundle, no root needed) ---
 // jpackage has no AppImage type, so we wrap the app-image output in an AppDir
-// (AppRun + .desktop + icon) and pack it with appimagetool.
-val appImageArch = "x86_64" // change to "aarch64" when building on ARM
+// (AppRun + .desktop + icon) and pack it with appimagetool. Linux-only.
+val isLinuxHost = org.gradle.internal.os.OperatingSystem.current().isLinux
+val appImageArch = when (System.getProperty("os.arch")) {
+    "aarch64", "arm64" -> "aarch64"
+    else -> "x86_64"
+} // matches the runner arch automatically (x86_64 runner -> x86_64 AppImage)
+val appImageVersion = ((findProperty("appVersion") as String?) ?: version.toString())
+    .removePrefix("v").removeSuffix("-SNAPSHOT")
 val appimagetoolVersion = "1.9.1"
 val appimagetoolUrl =
     "https://github.com/AppImage/appimagetool/releases/download/$appimagetoolVersion/appimagetool-$appImageArch.AppImage"
@@ -138,6 +165,7 @@ tasks.register("prepareAppDir") {
     group = "distribution"
     description = "Assembles the AppDir wrapping the jpackage app-image."
     dependsOn("jpackageImage")
+    onlyIf { isLinuxHost }
 
     doLast {
         val appImage = layout.buildDirectory.dir("jpackage/lotp-desktop").get().asFile
@@ -173,8 +201,9 @@ tasks.register("prepareAppDir") {
 
 tasks.register<Exec>("appImage") {
     group = "distribution"
-    description = "Builds build/appimage/lotp-desktop-<version>-x86_64.AppImage (downloads appimagetool once)."
+    description = "Builds build/appimage/lotp-desktop-<version>-<arch>.AppImage (downloads appimagetool once, Linux only)."
     dependsOn("prepareAppDir")
+    onlyIf { isLinuxHost }
 
     doFirst {
         val toolsDir = layout.buildDirectory.dir("appimage/tools").get().asFile.apply { mkdirs() }
@@ -189,7 +218,7 @@ tasks.register<Exec>("appImage") {
         val appDir = layout.buildDirectory.dir("appimage/lotp-desktop.AppDir").get().asFile
         val outFile = layout.buildDirectory
             .dir("appimage").get().asFile
-            .resolve("lotp-desktop-${version.toString().removeSuffix("-SNAPSHOT")}-$appImageArch.AppImage")
+            .resolve("lotp-desktop-$appImageVersion-$appImageArch.AppImage")
         outFile.delete()
 
         executable = tool.absolutePath

@@ -1,24 +1,26 @@
 package com.bs.lotp.desktop.ui.plugintable.cols;
 
 import com.bs.lotp.desktop.ui.plugintable.PluginRow;
-import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
-import javafx.scene.control.TableColumn;
 
-public class StatusColumn extends AbstractPluginColumn<String> {
+import java.util.Comparator;
+
+/**
+ * Status pill column. Carries the row as its value so sorting follows status
+ * order (not installed → installed → update available) instead of pill text.
+ */
+public class StatusColumn extends AbstractPluginColumn<PluginRow> {
 
     public StatusColumn() {
         super("Status");
         this.setCellValueFactory(cell ->
-                new SimpleStringProperty(cell.getValue().status().text));
+                new SimpleObjectProperty<>(cell.getValue()));
+        this.setComparator(Comparator.comparing(row -> row.status().ordinal()));
         setPrefWidth(140);
-        setCellFactory(StatusColumn::tableCell);
-    }
-
-    private static TableCell<PluginRow, String> tableCell(TableColumn<PluginRow, String> col) {
-        return new TableCell<>() {
+        setCellFactory(col -> new TableCell<>() {
             private final Label pill = new Label();
 
             {
@@ -27,14 +29,13 @@ public class StatusColumn extends AbstractPluginColumn<String> {
             }
 
             @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || getTableRow() == null || getTableRow().getItem() == null) {
+            protected void updateItem(PluginRow row, boolean empty) {
+                super.updateItem(row, empty);
+                if (empty || row == null) {
                     setGraphic(null);
                     setText(null);
                     return;
                 }
-                PluginRow row = (PluginRow) getTableRow().getItem();
                 pill.setText(row.status().text);
                 pill.getStyleClass().removeAll("pill-none", "pill-installed", "pill-update");
                 switch (row.status()) {
@@ -45,6 +46,6 @@ public class StatusColumn extends AbstractPluginColumn<String> {
                 setGraphic(pill);
                 setText(null);
             }
-        };
+        });
     }
 }

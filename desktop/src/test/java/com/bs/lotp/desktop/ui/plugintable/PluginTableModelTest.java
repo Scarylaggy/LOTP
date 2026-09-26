@@ -6,6 +6,7 @@ import com.bs.lotp.desktop.ui.Status;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -110,5 +111,69 @@ class PluginTableModelTest {
         // "v" prefix is insignificant
         assertEquals(Status.INSTALLED,
                 PluginRow.of(feed(1, "A", "B", "v1.45", "C"), installed(1, "1.45", 100)).status());
+    }
+
+    @Test
+    void sortedFollowsComparator() {
+        PluginTableModel model = modelWithRows();
+
+        // No comparator: insertion order.
+        assertEquals(List.of("TitanBar", "Deed Tracker", "Broke Legs"),
+                model.sorted().stream().map(r -> r.plugin().name()).toList());
+
+        model.sorted().setComparator(
+                Comparator.comparing((PluginRow r) -> r.plugin().name(), String.CASE_INSENSITIVE_ORDER));
+        assertEquals(List.of("Broke Legs", "Deed Tracker", "TitanBar"),
+                model.sorted().stream().map(r -> r.plugin().name()).toList());
+    }
+
+    @Test
+    void sortingAppliesToFilteredRows() {
+        PluginTableModel model = new PluginTableModel();
+        model.setRows(List.of(
+                PluginRow.of(feed(1, "Zulu", "Smith", "1.0", "UI"), null),
+                PluginRow.of(feed(2, "Alpha", "Jones", "1.0", "UI"), null),
+                PluginRow.of(feed(3, "Mike", "Smith", "1.0", "UI"), null)));
+        model.setQuery("smith"); // matches Zulu + Mike via author
+        model.sorted().setComparator(
+                Comparator.comparing((PluginRow r) -> r.plugin().name(), String.CASE_INSENSITIVE_ORDER));
+
+        assertEquals(List.of("Mike", "Zulu"),
+                model.sorted().stream().map(r -> r.plugin().name()).toList());
+
+        model.setQuery("");
+        assertEquals(3, model.sorted().size());
+    }
+
+    @Test
+    void versionsCompareNumerically() {
+        assertTrue(PluginRow.compareVersions("1.9", "1.10") < 0);
+        assertTrue(PluginRow.compareVersions("1.10", "1.9") > 0);
+        assertEquals(0, PluginRow.compareVersions("v1.45", "1.45"));
+        assertEquals(0, PluginRow.compareVersions("3.3.0", "3.3.0"));
+        assertTrue(PluginRow.compareVersions("1.0.2", "1.0.10") < 0);
+        assertTrue(PluginRow.compareVersions("2.0", "10.0") < 0);
+        assertTrue(PluginRow.compareVersions("", "1.0") < 0);
+        assertEquals(0, PluginRow.compareVersions(null, ""));
+    }
+
+    @Test
+    void sortsBySizeNumerically() {
+        PluginTableModel model = new PluginTableModel();
+        model.setRows(List.of(
+                rowWithSize(1, 10_000),
+                rowWithSize(2, 9_000),
+                rowWithSize(3, 2_000_000)));
+        model.sorted().setComparator(Comparator.comparingLong(r -> r.plugin().size()));
+
+        // Lexicographic order would put "10 KB" before "9 KB" — numeric must not.
+        assertEquals(List.of(2L, 1L, 3L),
+                model.sorted().stream().map(r -> r.plugin().uid()).toList());
+    }
+
+    private static PluginRow rowWithSize(long uid, long size) {
+        return PluginRow.of(
+                new PluginInfo(uid, "P" + uid, "A", "1.0", null, 0, "C", "d", "", "", size, ""),
+                null);
     }
 }

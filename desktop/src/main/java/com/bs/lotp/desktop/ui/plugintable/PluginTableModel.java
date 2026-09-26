@@ -3,14 +3,15 @@ package com.bs.lotp.desktop.ui.plugintable;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 
 import java.util.List;
 import java.util.Locale;
 
 /**
- * Model of the plugin table: all rows plus search/category filter state.
- * Pure collections, no controls — safe to use and unit-test without the
- * JavaFX toolkit running.
+ * Model of the plugin table: all rows plus search/category filter state and
+ * sort order. Pure collections, no controls — safe to use and unit-test
+ * without the JavaFX toolkit running.
  */
 public class PluginTableModel {
 
@@ -18,6 +19,7 @@ public class PluginTableModel {
 
     private final ObservableList<PluginRow> rows = FXCollections.observableArrayList();
     private final FilteredList<PluginRow> filtered = new FilteredList<>(rows, row -> true);
+    private final SortedList<PluginRow> sorted = new SortedList<>(filtered);
 
     private String query = "";
     private String category = ALL_CATEGORIES;
@@ -27,6 +29,14 @@ public class PluginTableModel {
      */
     public FilteredList<PluginRow> filtered() {
         return filtered;
+    }
+
+    /**
+     * Filtered rows in table sort order. The view binds this list's comparator
+     * to the {@code TableView} comparator, so clicking a column header sorts.
+     */
+    public SortedList<PluginRow> sorted() {
+        return sorted;
     }
 
     public boolean isEmpty() {

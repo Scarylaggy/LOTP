@@ -17,7 +17,7 @@ public class PluginTablePresenter {
     private Consumer<PluginRow> selectionListener = row -> {};
 
     public PluginTablePresenter() {
-        view = new PluginTableView(model.filtered(), this::onSelection);
+        view = new PluginTableView(model.sorted(), this::onSelection);
     }
 
     public TableView<PluginRow> node() {
@@ -37,7 +37,7 @@ public class PluginTablePresenter {
 
     public void replaceRow(PluginRow replacement) {
         model.replaceRow(replacement);
-        var items = model.filtered();
+        var items = model.sorted();
         for (int i = 0; i < items.size(); i++) {
             if (items.get(i).plugin().uid() == replacement.plugin().uid()) {
                 view.node().getSelectionModel().select(i);
