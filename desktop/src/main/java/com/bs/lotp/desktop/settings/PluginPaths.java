@@ -21,8 +21,6 @@ public class PluginPaths {
     private static final String SETTINGS_FILE = "settings.yaml";
     private static final String LEGACY_SETTINGS_FILE = "settings.properties";
     private static final String SETTINGS_DIR = ".lotp";
-    /** Pre-rename config folder; moved over on first start (see {@link #migrateConfigDir()}). */
-    private static final String PREVIOUS_SETTINGS_DIR = ".lotp-desktop";
 
     /**
      * Steam AppID of LOTRO (for Proton prefix lookup on Linux).
@@ -125,7 +123,6 @@ public class PluginPaths {
     }
 
     private AppSettings loadSettings() throws IOException {
-        migrateConfigDir();
         Path file = configDir.resolve(SETTINGS_FILE);
         if (Files.isRegularFile(file)) {
             AppSettings settings = yaml.readValue(file.toFile(), AppSettings.class);
@@ -141,31 +138,6 @@ public class PluginPaths {
     private void saveSettings(AppSettings settings) throws IOException {
         Files.createDirectories(configDir);
         yaml.writerWithDefaultPrettyPrinter().writeValue(configDir.resolve(SETTINGS_FILE).toFile(), settings);
-    }
-
-    /**
-     * One-time move from the pre-rename {@code ~/.lotp-desktop} folder.
-     * Only applies to the default config location, never to injected (test) dirs.
-     * The old folder is left in place; the user can delete it.
-     */
-    private void migrateConfigDir() throws IOException {
-        if (configDir.getFileName() == null || !configDir.getFileName().toString().equals(SETTINGS_DIR)) {
-            return;
-        }
-        if (Files.isRegularFile(configDir.resolve(SETTINGS_FILE))) {
-            return;
-        }
-        Path previous = home.resolve(PREVIOUS_SETTINGS_DIR);
-        if (!Files.isDirectory(previous)) {
-            return;
-        }
-        Files.createDirectories(configDir);
-        for (String name : List.of(SETTINGS_FILE, LEGACY_SETTINGS_FILE)) {
-            Path src = previous.resolve(name);
-            if (Files.isRegularFile(src)) {
-                Files.copy(src, configDir.resolve(name));
-            }
-        }
     }
 
     /**

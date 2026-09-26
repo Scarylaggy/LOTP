@@ -83,17 +83,6 @@ class PluginPathsTest {
     }
 
     @Test
-    void migratesPreviousConfigDir(@TempDir Path temp) throws Exception {
-        Path previous = temp.resolve(".lotp-desktop");
-        Files.createDirectories(previous);
-        Files.writeString(previous.resolve("settings.yaml"), "theme: dark\n");
-
-        PluginPaths paths = new PluginPaths(temp.resolve(".lotp"), temp);
-        assertEquals("dark", paths.theme());
-        assertTrue(Files.isRegularFile(temp.resolve(".lotp/settings.yaml")));
-    }
-
-    @Test
     void candidatesCoverWineAndProton(@TempDir Path temp) {
         List<Path> candidates = PluginPaths.candidates(temp);
         assertTrue(candidates.stream().anyMatch(p -> p.toString().contains("compatdata")));
