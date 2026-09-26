@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "com.bs"
-version = "1.0.2"
+version = "1.0.3-SNAPSHOT"
 
 java {
     toolchain {
