@@ -59,6 +59,9 @@ application {
 // --- Shipping with jpackage (JDK built-in, no extra plugins) ---
 // jpackage bundles the app + a trimmed JRE into a self-contained image/installer.
 // Installers are platform-specific: run the build on the OS you want to ship for.
+// LOTP ("Lord of the Plugins"): user-visible app name used for the jpackage
+// image, launcher binary, installer metadata and release artifacts.
+val appName = "LOTP"
 val appMainClass = "com.bs.lotp.desktop.DesktopApp"
 val javafxAddModules = "javafx.base,javafx.controls,javafx.fxml,javafx.graphics"
 // jpackage derives most JDK modules via jdeps, but misses ones only touched
@@ -79,7 +82,7 @@ fun registerJpackageTask(taskName: String, packageType: String, taskDescription:
             // single file into --dest, so deleting here would wipe a sibling
             // jpackageImage output that the release workflow zips up afterwards.
             if (packageType == "app-image") {
-                delete(layout.buildDirectory.dir("jpackage/lotp-desktop").get().asFile)
+                delete(layout.buildDirectory.dir("jpackage/$appName").get().asFile)
             }
 
             val launcher = javaToolchains.launcherFor {
@@ -111,9 +114,9 @@ fun registerJpackageTask(taskName: String, packageType: String, taskDescription:
             val jpackageArgs = mutableListOf(
                 "--type", packageType,
                 "--dest", layout.buildDirectory.dir("jpackage").get().asFile.absolutePath,
-                "--name", "lotp-desktop",
+                "--name", appName,
                 "--app-version", appVersion,
-                "--vendor", "lotp",
+                "--vendor", "LOTP",
                 "--input", libDir.absolutePath,
                 "--main-jar", mainJar,
                 "--main-class", appMainClass,
@@ -121,6 +124,8 @@ fun registerJpackageTask(taskName: String, packageType: String, taskDescription:
                 "--add-modules", "$javafxAddModules,$jdkAddModules",
                 "--java-options", "--enable-native-access=javafx.graphics"
             )
+            // Debian package names must be lowercase; the launcher keeps the "LOTP" name.
+            if (packageType == "deb") jpackageArgs.addAll(listOf("--linux-package-name", "lotp"))
             // jpackage wants a per-OS icon format; use it only when present.
             val iconExt = when {
                 org.gradle.internal.os.OperatingSystem.current().isWindows -> "ico"
@@ -134,7 +139,7 @@ fun registerJpackageTask(taskName: String, packageType: String, taskDescription:
     }
 }
 
-// Portable folder: build/jpackage/lotp-desktop/bin/lotp-desktop — zip this for ad-hoc sharing.
+// Portable folder: build/jpackage/LOTP/bin/LOTP — zip this for ad-hoc sharing.
 registerJpackageTask(
     "jpackageImage",
     "app-image",
@@ -175,9 +180,9 @@ tasks.register("prepareAppDir") {
     onlyIf { isLinuxHost }
 
     doLast {
-        val appImage = layout.buildDirectory.dir("jpackage/lotp-desktop").get().asFile
+        val appImage = layout.buildDirectory.dir("jpackage/$appName").get().asFile
         require(appImage.isDirectory) { "jpackage app-image missing: $appImage" }
-        val appDir = layout.buildDirectory.dir("appimage/lotp-desktop.AppDir").get().asFile
+        val appDir = layout.buildDirectory.dir("appimage/$appName.AppDir").get().asFile
         delete(appDir)
         copy {
             from(appImage)
@@ -185,30 +190,30 @@ tasks.register("prepareAppDir") {
         }
         // AppRun: AppImages execute this; $APPDIR is set by the runtime.
         appDir.resolve("AppRun").writeText(
-            "#!/bin/sh\n" + "exec \"\$APPDIR/bin/lotp-desktop\" \"\$@\"\n"
+            "#!/bin/sh\n" + "exec \"\$APPDIR/bin/$appName\" \"\$@\"\n"
         )
         appDir.resolve("AppRun").setExecutable(true)
-        appDir.resolve("lotp-desktop.desktop").writeText(
+        appDir.resolve("$appName.desktop").writeText(
             """
             [Desktop Entry]
-            Name=lotp Desktop
-            Exec=lotp-desktop
-            Icon=lotp-desktop
+            Name=LOTP
+            Exec=LOTP
+            Icon=LOTP
             Type=Application
             Categories=Utility;
-            Comment=lotp desktop client
+            Comment=Lord of the Plugins (LOTRO plugin manager)
             """.trimIndent() + "\n"
         )
         val icon = projectDir.resolve("src/main/resources/icon.png")
         require(icon.isFile) { "Missing icon: $icon" }
-        icon.copyTo(appDir.resolve("lotp-desktop.png"))
+        icon.copyTo(appDir.resolve("$appName.png"))
         icon.copyTo(appDir.resolve(".DirIcon"))
     }
 }
 
 tasks.register<Exec>("appImage") {
     group = "distribution"
-    description = "Builds build/appimage/lotp-desktop-<version>-<arch>.AppImage (downloads appimagetool once, Linux only)."
+    description = "Builds build/appimage/LOTP-<version>-<arch>.AppImage (downloads appimagetool once, Linux only)."
     dependsOn("prepareAppDir")
     onlyIf { isLinuxHost }
 
@@ -222,10 +227,10 @@ tasks.register<Exec>("appImage") {
             }
             tool.setExecutable(true)
         }
-        val appDir = layout.buildDirectory.dir("appimage/lotp-desktop.AppDir").get().asFile
+        val appDir = layout.buildDirectory.dir("appimage/$appName.AppDir").get().asFile
         val outFile = layout.buildDirectory
             .dir("appimage").get().asFile
-            .resolve("lotp-desktop-$appImageVersion-$appImageArch.AppImage")
+            .resolve("$appName-$appImageVersion-$appImageArch.AppImage")
         outFile.delete()
 
         executable = tool.absolutePath

@@ -226,7 +226,7 @@ public class PluginBrowserView {
      */
     public void showError(String action, String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("lotp Desktop");
+        alert.setTitle("LOTP");
         alert.setHeaderText(action + " failed");
         alert.setContentText(message == null ? "Unknown error" : message);
         styleDialog(alert);
