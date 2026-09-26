@@ -47,8 +47,11 @@ jobs:
         run: |
           if (-not (Get-Command candle.exe -ErrorAction SilentlyContinue)) {
             choco install wixtoolset --no-progress -y
+            # choco updates the machine PATH; refresh it for this session.
+            $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
           }
-          candle.exe -? | Select-Object -First 1
+          # NB: do NOT verify with `candle -?` — it prints usage and exits 1.
+          Get-Command candle.exe | Select-Object -ExpandProperty Source
 
       - name: Resolve version
         id: version
