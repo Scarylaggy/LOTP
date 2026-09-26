@@ -10,7 +10,7 @@ plugins {
 }
 
 group = "com.bs"
-version = "1.0.1"
+version = "1.0.2"
 
 java {
     toolchain {
@@ -74,8 +74,13 @@ fun registerJpackageTask(taskName: String, packageType: String, taskDescription:
 
         // Everything is resolved at execution time so configuration stays cheap and safe.
         doFirst {
-            // jpackage refuses to overwrite an existing image directory.
-            delete(layout.buildDirectory.dir("jpackage/lotp-desktop").get().asFile)
+            // jpackage refuses to overwrite an existing image directory — but only
+            // app-image writes a directory. Installer types (deb/msi/dmg) write a
+            // single file into --dest, so deleting here would wipe a sibling
+            // jpackageImage output that the release workflow zips up afterwards.
+            if (packageType == "app-image") {
+                delete(layout.buildDirectory.dir("jpackage/lotp-desktop").get().asFile)
+            }
 
             val launcher = javaToolchains.launcherFor {
                 languageVersion.set(JavaLanguageVersion.of(25))
