@@ -43,7 +43,7 @@ public class DesktopApp extends Application {
                 context.getBean(PluginInstaller.class),
                 context.getBean(InstalledStore.class),
                 context.getBean(PluginPaths.class));
-        stage.setTitle("LOTRO Plugin Manager");
+        stage.setTitle("LOTP — Lord of the Plugins");
         double[] bounds = restoreBounds(stage);
         double width = bounds == null ? 1100 : bounds[2];
         double height = bounds == null ? 680 : bounds[3];

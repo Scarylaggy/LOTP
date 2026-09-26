@@ -20,6 +20,7 @@ public class PluginPaths {
 
     private static final String SETTINGS_FILE = "settings.yaml";
     private static final String LEGACY_SETTINGS_FILE = "settings.properties";
+    private static final String SETTINGS_DIR = ".lotp";
 
     /**
      * Steam AppID of LOTRO (for Proton prefix lookup on Linux).
@@ -31,7 +32,7 @@ public class PluginPaths {
     private final ObjectMapper yaml = new YAMLMapper();
 
     public PluginPaths() {
-        this(Path.of(System.getProperty("user.home"), ".lotp-desktop"),
+        this(Path.of(System.getProperty("user.home"), SETTINGS_DIR),
                 Path.of(System.getProperty("user.home")));
     }
 
