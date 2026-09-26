@@ -25,8 +25,6 @@ repositories {
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-restclient")
-    // Same JSON stack as the backend (Jackson 3). Kept on the classpath;
-    // only the JavaFX platform jars go on jpackage's --module-path below.
     implementation("tools.jackson.core:jackson-databind:3.1.5")
     implementation("tools.jackson.dataformat:jackson-dataformat-yaml:3.1.5")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -37,8 +35,6 @@ tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-// The Boot plugin replaces the plain jar with a fat bootJar; but installDist/jpackage
-// need the plain jar, so keep both (bootJar gets a classifier to avoid clashing).
 tasks.named<BootJar>("bootJar") {
     archiveClassifier = "boot"
 }
@@ -56,16 +52,9 @@ application {
     applicationDefaultJvmArgs = listOf("--enable-native-access=javafx.graphics")
 }
 
-// --- Shipping with jpackage (JDK built-in, no extra plugins) ---
-// jpackage bundles the app + a trimmed JRE into a self-contained image/installer.
-// Installers are platform-specific: run the build on the OS you want to ship for.
-// LOTP ("Lord of the Plugins"): user-visible app name used for the jpackage
-// image, launcher binary, installer metadata and release artifacts.
 val appName = "LOTP"
 val appMainClass = "com.bs.lotp.desktop.DesktopApp"
 val javafxAddModules = "javafx.base,javafx.controls,javafx.fxml,javafx.graphics"
-// jpackage derives most JDK modules via jdeps, but misses ones only touched
-// reflectively/lazily (e.g. java.net.http via Spring's request factory), so list them.
 val jdkAddModules = "java.net.http,java.management,java.naming,java.sql,java.xml"
 val javaToolchains = extensions.getByType<JavaToolchainService>()
 
@@ -75,12 +64,7 @@ fun registerJpackageTask(taskName: String, packageType: String, taskDescription:
         description = taskDescription
         dependsOn("installDist")
 
-        // Everything is resolved at execution time so configuration stays cheap and safe.
         doFirst {
-            // jpackage refuses to overwrite an existing image directory — but only
-            // app-image writes a directory. Installer types (deb/msi/dmg) write a
-            // single file into --dest, so deleting here would wipe a sibling
-            // jpackageImage output that the release workflow zips up afterwards.
             if (packageType == "app-image") {
                 delete(layout.buildDirectory.dir("jpackage/$appName").get().asFile)
             }
@@ -88,7 +72,6 @@ fun registerJpackageTask(taskName: String, packageType: String, taskDescription:
             val launcher = javaToolchains.launcherFor {
                 languageVersion.set(JavaLanguageVersion.of(25))
             }.get()
-            // Windows ships jpackage.exe; Unix-likes ship jpackage.
             val jpackageName = if (org.gradle.internal.os.OperatingSystem.current().isWindows) "jpackage.exe" else "jpackage"
             val jpackageBin = launcher.metadata.installationPath.asFile.resolve("bin/$jpackageName")
             require(jpackageBin.isFile) { "jpackage not found in toolchain JDK: $jpackageBin" }
@@ -97,9 +80,6 @@ fun registerJpackageTask(taskName: String, packageType: String, taskDescription:
             require(libDir.isDirectory) { "installDist output missing: $libDir" }
             val mainJar = tasks.named<Jar>("jar").get().archiveFileName.get()
 
-            // JavaFX platform jars (e.g. javafx-controls-25-linux.jar) are modular jars,
-            // so jlink (invoked internally by jpackage) can use them as --module-path.
-            // Exclude the classifier-less aggregator jars to avoid duplicate modules.
             val platformClassifier = Regex(".*-(linux|linux-aarch64|win|mac|mac-aarch64)\\.jar")
             val modulePath = configurations.runtimeClasspath.get().files
                 .filter { it.name.startsWith("javafx-") && it.name.matches(platformClassifier) }
@@ -107,8 +87,6 @@ fun registerJpackageTask(taskName: String, packageType: String, taskDescription:
             require(modulePath.isNotEmpty()) { "No JavaFX platform jars found on runtimeClasspath" }
 
             executable = jpackageBin.absolutePath
-            // Release builds pass -PappVersion=1.2.3 (tag); dev builds fall back to
-            // project.version without the -SNAPSHOT suffix (jpackage requires X.Y[.Z]).
             val rawVersion = (findProperty("appVersion") as String?) ?: version.toString()
             val appVersion = rawVersion.removePrefix("v").removeSuffix("-SNAPSHOT")
             val jpackageArgs = mutableListOf(
@@ -124,9 +102,7 @@ fun registerJpackageTask(taskName: String, packageType: String, taskDescription:
                 "--add-modules", "$javafxAddModules,$jdkAddModules",
                 "--java-options", "--enable-native-access=javafx.graphics"
             )
-            // Debian package names must be lowercase; the launcher keeps the "LOTP" name.
             if (packageType == "deb") jpackageArgs.addAll(listOf("--linux-package-name", "lotp"))
-            // jpackage wants a per-OS icon format; use it only when present.
             val iconExt = when {
                 org.gradle.internal.os.OperatingSystem.current().isWindows -> "ico"
                 org.gradle.internal.os.OperatingSystem.current().isMacOsX -> "icns"
@@ -139,15 +115,11 @@ fun registerJpackageTask(taskName: String, packageType: String, taskDescription:
     }
 }
 
-// Portable folder: build/jpackage/LOTP/bin/LOTP — zip this for ad-hoc sharing.
 registerJpackageTask(
     "jpackageImage",
     "app-image",
     "Builds a self-contained app image (no installer, works everywhere)."
 )
-// Native installer for the current OS. jpackage installers are platform-specific:
-// run the build on the OS you want to ship for (CI does this via a build matrix).
-// Linux 'deb' needs dpkg-deb, Windows 'msi' needs WiX Toolset, macOS 'dmg' needs nothing extra.
 val installerType = when {
     org.gradle.internal.os.OperatingSystem.current().isWindows -> "msi"
     org.gradle.internal.os.OperatingSystem.current().isMacOsX -> "dmg"
@@ -159,14 +131,11 @@ registerJpackageTask(
     "Builds a native installer for the current OS (deb on Linux, msi on Windows, dmg on macOS)."
 )
 
-// --- AppImage (Linux single-file bundle, no root needed) ---
-// jpackage has no AppImage type, so we wrap the app-image output in an AppDir
-// (AppRun + .desktop + icon) and pack it with appimagetool. Linux-only.
 val isLinuxHost = org.gradle.internal.os.OperatingSystem.current().isLinux
 val appImageArch = when (System.getProperty("os.arch")) {
     "aarch64", "arm64" -> "aarch64"
     else -> "x86_64"
-} // matches the runner arch automatically (x86_64 runner -> x86_64 AppImage)
+}
 val appImageVersion = ((findProperty("appVersion") as String?) ?: version.toString())
     .removePrefix("v").removeSuffix("-SNAPSHOT")
 val appimagetoolVersion = "1.9.1"
