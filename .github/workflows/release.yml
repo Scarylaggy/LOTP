@@ -1,6 +1,7 @@
 name: Release
 
-# Builds a native installer per OS and publishes a GitHub Release.
+# Packages the app per OS (portable zip everywhere, plus native installer on Linux)
+# and publishes a GitHub Release.
 # Trigger: push a tag like v0.1.0, or run manually (workflow_dispatch).
 # jpackage versioning requires numeric tags (vMAJOR.MINOR[.PATCH]).
 on:
@@ -40,19 +41,6 @@ jobs:
         if: runner.os == 'Linux'
         run: sudo apt-get update -y && sudo apt-get install -y dpkg-dev fakeroot
 
-      # jpackage Windows 'msi' output needs WiX Toolset 3.x (candle/light on PATH).
-      - name: Install WiX Toolset
-        if: runner.os == 'Windows'
-        shell: powershell
-        run: |
-          if (-not (Get-Command candle.exe -ErrorAction SilentlyContinue)) {
-            choco install wixtoolset --no-progress -y
-            # choco updates the machine PATH; refresh it for this session.
-            $env:Path = [System.Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [System.Environment]::GetEnvironmentVariable('Path','User')
-          }
-          # NB: do NOT verify with `candle -?` — it prints usage and exits 1.
-          Get-Command candle.exe | Select-Object -ExpandProperty Source
-
       - name: Resolve version
         id: version
         shell: bash
@@ -65,9 +53,15 @@ jobs:
           echo "ver=$VER" >> "$GITHUB_OUTPUT"
           echo "Building version: $VER"
 
-      - name: Build, test, package
+      - name: Build, test, package app-image
         shell: bash
-        run: ./gradlew :desktop:build :desktop:jpackageImage :desktop:jpackageInstaller "-PappVersion=${{ steps.version.outputs.ver }}" --stacktrace
+        run: ./gradlew :desktop:build :desktop:jpackageImage "-PappVersion=${{ steps.version.outputs.ver }}" --stacktrace
+
+      # Native installer, Linux only (Windows ships as portable zip).
+      - name: Build installer
+        if: runner.os == 'Linux'
+        shell: bash
+        run: ./gradlew :desktop:jpackageInstaller "-PappVersion=${{ steps.version.outputs.ver }}" --stacktrace
 
       # Extra single-file bundle for Linux, no root/install needed.
       - name: Build AppImage
@@ -80,8 +74,8 @@ jobs:
         shell: bash
         run: |
           mkdir -p dist
-          cp desktop/build/jpackage/*.deb "dist/lotp-desktop-${{ steps.version.outputs.ver }}-linux-x86_64.deb"
-          cp desktop/build/appimage/*.AppImage "dist/lotp-desktop-${{ steps.version.outputs.ver }}-linux-x86_64.AppImage"
+          cp desktop/build/jpackage/*.deb "dist/LOTP-${{ steps.version.outputs.ver }}-linux-x86_64.deb"
+          cp desktop/build/appimage/*.AppImage "dist/LOTP-${{ steps.version.outputs.ver }}-linux-x86_64.AppImage"
 
       - name: Stage release files (Windows)
         if: runner.os == 'Windows'
@@ -89,14 +83,13 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force dist | Out-Null
           $ver = "${{ steps.version.outputs.ver }}"
-          Copy-Item desktop/build/jpackage/*.msi "dist/lotp-desktop-$ver-windows-x86_64.msi"
-          Compress-Archive -Path desktop/build/jpackage/lotp-desktop/* `
-            -DestinationPath "dist/lotp-desktop-$ver-windows-x86_64.zip" -Force
+          Compress-Archive -Path desktop/build/jpackage/LOTP/* `
+            -DestinationPath "dist/LOTP-$ver-windows-x86_64.zip" -Force
 
       - name: Upload staged files
         uses: actions/upload-artifact@v4
         with:
-          name: lotp-dist-${{ matrix.os }}
+          name: LOTP-dist-${{ matrix.os }}
           path: dist/
           retention-days: 7
 
@@ -109,7 +102,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          pattern: lotp-dist-*
+          pattern: LOTP-dist-*
           merge-multiple: true
           path: dist/
 
