@@ -80,7 +80,9 @@ fun registerJpackageTask(taskName: String, packageType: String, taskDescription:
             val launcher = javaToolchains.launcherFor {
                 languageVersion.set(JavaLanguageVersion.of(25))
             }.get()
-            val jpackageBin = launcher.metadata.installationPath.asFile.resolve("bin/jpackage")
+            // Windows ships jpackage.exe; Unix-likes ship jpackage.
+            val jpackageName = if (org.gradle.internal.os.OperatingSystem.current().isWindows) "jpackage.exe" else "jpackage"
+            val jpackageBin = launcher.metadata.installationPath.asFile.resolve("bin/$jpackageName")
             require(jpackageBin.isFile) { "jpackage not found in toolchain JDK: $jpackageBin" }
 
             val libDir = layout.buildDirectory.dir("install/desktop/lib").get().asFile
